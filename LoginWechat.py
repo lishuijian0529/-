@@ -16,14 +16,17 @@ from weiba_api import WB
 import json
 import base64
 import re
-import traceback
 
 class login_wechat():
-    def __init__(self, deviceid, port, gj_mode, country=None, gj=None, wxid=None, login_mode=None, cloudCode=None, ip=None, date=None,switchingmode=None):
+    def __init__(self, deviceid, port, gj_mode, country=None, gj=None, wxid=None, login_mode=None, cloudCode=None, ip=None, date=None):
         self.deviceid = deviceid
         self.port = port
         self.om = file().readOperationMode()
         self.gj_mode = gj_mode
+        self.wb_appPackage = 'com.md188.weiba'
+        self.wb_appActivity = '.MainActivity'
+        self.dd_appPackage = file().readuser()[25].strip('\n')
+        self.dd_appActivity = file().readuser()[26].strip('\n')
         self.country = country
         self.gj = gj
         self.w = WB(self.deviceid)
@@ -32,81 +35,37 @@ class login_wechat():
         self.cloudCode = cloudCode
         self.ip = ip
         self.date = date
-        self.switchingmode=switchingmode
         self.element_json = json.loads(file.read_all('6.7.3.json'))
+        self.w = WB(deviceid)
 
-
-    def sandbox_login(self, ph, mm):
-        with open('跳辅设置.txt'.decode('utf-8'), 'r')as f:
-            mode = json.loads(f.read())['transmission_mode']
-        os.popen('adb -s %s shell rm -rf /sdcard/boxbackup' % self.deviceid)
-        os.popen('adb -s %s shell mkdir /sdcard/boxbackup' % self.deviceid)
-        fsize = int(
-            round(os.path.getsize('package/%s/%s' % (self.deviceid, self.cloudCode)) / float(1024 * 1024), 2)) - 2
-        with open('沙盒账密配置.json'.decode('utf-8'), 'r') as f:
-            a = json.loads(f.read())
-        for i in a:
-            if self.deviceid == i['deviceid']:
-                username = i['username']
-                password = i['password']
-        if mode == 'ftp':
-            with open('server_config.txt', 'r') as f:
-                data = json.loads(f.read())
-            time.sleep(2)
-            os.popen('start adb -s %s shell curl ftp://%s/package/%s/%s -o /sdcard/boxbackup/%s'%(self.deviceid,data['host'],self.deviceid,self.cloudCode,self.cloudCode))
-        if mode == 'adb':
-            os.popen('start adb -s %s push package/%s/%s /sdcard/boxbackup/%s' %(self.deviceid,self.deviceid,self.cloudCode,self.cloudCode))
-        time.sleep(2)
-        while True:
-            time.sleep(3)
-            try:
-                sj_fsize = re.findall('([0-9]{1,3})M', os.popen('adb -s %s shell ls -lh sdcard/boxbackup/%s'%(self.deviceid,self.cloudCode)).read())[0]
-                logging.info(u'%s-正在检查文件传输状态,请稍等' % self.deviceid)
-                if int(sj_fsize) > int(fsize):
-                    logging.info(u'%s-文件传输完毕'% self.deviceid)
-                    break
-            except:
-                pass
-        self.driver = Open().Phone('com.dobe.sandbox', '.home.Main2Activity', self.deviceid, self.port)
-        self.driver.implicitly_wait(60)
-        self.driver.find_element_by_id('com.dobe.sandbox:id/download_icon').click()
-        wz = self.driver.find_element_by_id('com.dobe.sandbox:id/textView').get_attribute(('text'))
-        while True:
-            if wz.encode('utf-8') == '尚未登陆,点击登陆':
-                self.driver.find_element_by_name('尚未登陆,点击登陆').click()
-                self.driver.find_element_by_id('com.dobe.sandbox:id/editText').send_keys(username)
-                self.driver.find_element_by_id('com.dobe.sandbox:id/editText2').send_keys(password)
-                self.driver.keyevent('66')
-                time.sleep(1)
-                self.driver.find_element_by_name('点击登陆').click()
-                if self.driver.find_elements_by_id('com.dobe.sandbox:id/download_icon') != []:
-                    break
+    def wb_login(self, ph, mm):
+        if self.login_mode == '1.wxid登陆'.decode("utf-8"):
+            if self.w.switch_wechat_data(self.wxid) == True:
+                self.driver = Open().Phone('com.tencent.mm', '.ui.LauncherUI', self.deviceid, self.port)
+                self.driver.implicitly_wait(60)
+                return ph, mm
             else:
-                self.driver.keyevent('4')
-                break
-        self.driver.find_element_by_id('com.dobe.sandbox:id/context_menu').click()
-        self.driver.find_element_by_name('清除APP数据').click()
-        self.driver.find_element_by_name('确认删除').click()
-        time.sleep(5)
-        self.driver.find_element_by_id('com.dobe.sandbox:id/download_device').click()
-        self.driver.find_element_by_name('备份恢复').click()
-        while True:
-            if self.driver.find_elements_by_id('com.dobe.sandbox:id/backup_info') != []:
-                self.driver.find_element_by_id('com.dobe.sandbox:id/backup_info').click()
-                self.driver.find_element_by_name('确定').click()
-                break
-        time.sleep(10)
-        os.popen('adb -s %s shell am force-stop com.dobe.sandbox' % self.deviceid)
-        time.sleep(3)
-        os.popen('adb -s %s shell am start -n com.dobe.sandbox/.home.Main2Activity' % self.deviceid)
-        if self.driver.find_elements_by_id('com.dobe.sandbox:id/context_menu') != []:
-            self.driver.find_element_by_id('com.dobe.sandbox:id/appIcon').click()
-        return ph,mm
+                raise quit()
+        if self.login_mode == '2.云码登陆'.decode("utf-8"):
+            if self.w.cloudCodeRecover(self.cloudCode) == True:
+                self.driver = Open().Phone('com.tencent.mm', '.ui.LauncherUI', self.deviceid, self.port)
+                self.driver.implicitly_wait(60)
+                return ph, mm
 
     def visualization(self, message):
         try:
             requests.get('http://127.0.0.1:666/query?time=%s&number=%s&state=%s' % (int(time.time()), self.deviceid, message))
         except:pass
+
+    def dd_switch(self, ph, mm, device_token):
+        if duoduo_api.Recover(self.deviceid,device_token) == True:
+            self.visualization('环境还原成功')
+            logging.info(self.deviceid+u'-环境还原成功')
+            self.driver = Open().Phone('com.tencent.mm', '.ui.LauncherUI', self.deviceid, self.port)
+            self.driver.implicitly_wait(60)
+        self.visualization('启动')
+        logging.info(self.deviceid + u'-启动')
+        return ph, mm
 
     def error_message(self):
         while True:
@@ -146,28 +105,22 @@ class login_wechat():
             if '注册了新的微信号' in self.cw.encode('utf-8'):
                 return 'newwechat'
 
-
-
     def mm_login(self, ph, mm):
-        time.sleep(20)
-        self.driver.implicitly_wait(1)
+        time.sleep(10)
+        self.driver.implicitly_wait(2)
         while True:
             #如果出现输入框
             if self.driver.find_elements_by_id(self.element_json[u'输入框ID'])!=[]:
-                self.driver.implicitly_wait(60)
-                time.sleep(2)
-                if self.driver.find_elements_by_id('com.tencent.mm:id/ji') != []:
-                    self.driver.find_element_by_id('com.tencent.mm:id/ji').click()
-                    time.sleep(1)
-                    os.popen('adb -s %s shell input text %s' % (self.deviceid, mm))
+                self.driver.implicitly_wait(10)
+                os.system('adb -s %s shell input text %s' % (self.deviceid, mm))
+                self.visualization('输入密码')
                 logging.info(self.deviceid + u'-输入密码')
-                time.sleep(2)
-                self.driver.find_element_by_id('com.tencent.mm:id/ch6').click()
+                self.driver.find_element_by_id(self.element_json[u'输入密码登陆按钮ID']).click()
+                self.visualization('点击登陆')
                 logging.info(self.deviceid + u'-点击登录')
-                self.driver.implicitly_wait(60)
-                if self.driver.find_elements_by_id('com.tencent.mm:id/cvo') != []:
+                if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
                     # 判断是否登录不上
-                    self.cw = self.driver.find_element_by_id('com.tencent.mm:id/cvo').get_attribute(('text'))
+                    self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
                     if '表情' in self.cw.encode('utf-8'):
                         self.driver.find_element_by_name('取消').click()
                         break
@@ -176,9 +129,9 @@ class login_wechat():
                         break
                     else:
                         return self.error_message()
-            if self.driver.find_elements_by_id('com.tencent.mm:id/cvo')!=[]:
-                logging.info(u'%s-发现错误弹窗'%self.deviceid)
-                self.cw = self.driver.find_element_by_id('com.tencent.mm:id/cvo').get_attribute(('text'))
+            #如果出现错误弹窗
+            if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
+                self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
                 if '表情' in self.cw.encode('utf-8'):
                     self.driver.find_element_by_name('　取消　').click()
                 if '通过微信密码' in self.cw.encode('utf-8'):
@@ -186,30 +139,36 @@ class login_wechat():
                     break
                 else:
                     self.driver.implicitly_wait(60)
-                    self.driver.find_element_by_id('com.tencent.mm:id/au_').click()
-                    logging.info(u'%s-点击确定' % self.deviceid)
-                    logging.info(self.deviceid + u'-登陆出现错误')
-                    os.popen('adb -s %s shell am start -n com.dobe.sandbox/.home.Main2Activity' % self.deviceid)
-                    self.driver.find_element_by_id('com.dobe.sandbox:id/appIcon').click()
-                    logging.info(u'%s-打开微信' % self.deviceid)
-                    self.driver.implicitly_wait(1)
+                    self.driver.find_element_by_id(self.element_json[u'错误弹窗确定ID']).click()
+                    self.visualization('登陆出现错误')
+                    time.sleep(8)
+                    os.popen('adb -s %s shell am start -n com.tencent.mm/.ui.LauncherUI' % self.deviceid).read()
+                    self.driver.find_element_by_id(self.element_json[u'输入框ID']).send_keys(mm)
+                    self.visualization('输入密码')
+                    logging.info(self.deviceid + u'-输入密码')
+                    self.driver.find_element_by_id(self.element_json[u'输入密码登陆按钮ID']).click()
+                    self.visualization('点击登陆')
+                    logging.info(self.deviceid + u'-点击登录')
+                    time.sleep(12)
+                    self.driver.implicitly_wait(2)
+                    while True:
+                        if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
+                        #判断是否登录不上
+                            self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
+                            return self.error_message()
+                        if self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID']) != []:
+                            break
             #如果进入微信页面
-            if self.driver.find_elements_by_id('com.tencent.mm:id/cw2')!=[]:
+            if self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID'])!=[]:
                 break
             #如果进入微信首页
-            if self.driver.find_elements_by_id('com.tencent.mm:id/dbe')!=[]:
-                self.Home_Login(ph, mm)
-                while True:
-                    if self.driver.find_elements_by_id('com.tencent.mm:id/cvo') != []:
-                        self.cw = self.driver.find_element_by_id('com.tencent.mm:id/cvo').get_attribute(('text'))
-                        return self.error_message()
-                    if self.driver.find_elements_by_android_uiautomator(
-                        'new UiSelector().description("拖动下方滑块完成拼图")') != []:
-                        return 'huatu'
-                    if self.driver.find_elements_by_name('拖动下方滑块完成拼图') != []:
-                        return 'huatu'
-            if self.driver.find_elements_by_id('com.dobe.sandbox:id/appIcon'):
-                self.driver.find_element_by_id('com.dobe.sandbox:id/appIcon').click()
+            if self.driver.find_elements_by_name('登录')!=[]:
+                self.Home_Login(ph,mm)
+                if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
+                    self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
+                    return self.error_message()
+            if 'com.tencent.mm' not in os.popen('adb -s %s shell dumpsys activity | findstr "mFocusedActivity"'%self.deviceid).read():
+                os.popen('adb -s %s shell am start -n com.tencent.mm/.ui.LauncherUI' % self.deviceid).read()
 
     def Home_Login(self,ph,mm):
         self.driver.implicitly_wait(10)
@@ -231,7 +190,7 @@ class login_wechat():
 
     def zh_login(self, wechat_list):
         self.driver.implicitly_wait(5)
-        if self.driver.find_elements_by_name(self.element_json['allow']) != []:
+        if self.driver.find_elements_by_name(self.element_json['allow'])!=[]:
             self.driver.find_element_by_name(self.element_json['allow']).click()
             self.driver.find_element_by_name(self.element_json['allow']).click()
         self.driver.implicitly_wait(30)
@@ -252,13 +211,13 @@ class login_wechat():
         logging.info(self.deviceid + u'-登录')
         self.driver.implicitly_wait(2)
         while True:
-            if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID']) != []:
+            if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
                 self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
                 return self.error_message()
             if self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID']) != []:
                 break
             if self.driver.find_elements_by_android_uiautomator('new UiSelector().description("拖动下方滑块完成拼图")') != []:
-                logging.info(u'%s-进入滑图页面' % self.deviceid)
+                logging.info(u'%s-进入滑图页面'%self.deviceid)
                 while True:
                     for j in range(100, 200, 30):
                         try:
@@ -270,8 +229,7 @@ class login_wechat():
                             for i in range(0, j / 10):
                                 a.move_to(x=10, y=0).wait(100)
                             a.release().perform()
-                        except:
-                            pass
+                        except:pass
                     if self.driver.find_elements_by_android_uiautomator('new UiSelector().description("开始验证 ")') != []:
                         file().write('%s\n' % wechat_list[0], '新设备记录文本.txt')
                         logging.info(u'%s-%s该账号出现新设备' % (self.deviceid, wechat_list[0]))
@@ -287,10 +245,9 @@ class login_wechat():
                         break
             if self.driver.find_elements_by_android_uiautomator('new UiSelector().description("开始验证 ")') != []:
                 file().write('%s\n' % wechat_list[0], '新设备记录文本.txt')
-                logging.info(u'%s-%s该账号出现新设备' % (self.deviceid, wechat_list[0]))
+                logging.info(u'%s-%s该账号出现新设备'%(self.deviceid,wechat_list[0]))
                 self.driver.quit()
                 break
-
     def upgrade(self):
         if self.driver.find_elements_by_name('微信团队邀请你参与内部体验')!=[]:
             self.driver.find_element_by_name('微信团队邀请你参与内部体验').click()
@@ -326,27 +283,43 @@ class login_wechat():
             file().write( '%s %s %s %s 解封环境异常 %s\n' % (wechat_list[0], wechat_list[1], self.ip, self.date, self.deviceid), '登录异常账号.txt')
         if error == 'newwechat':
             file().write('%s %s %s %s 注册了新的微信号 %s\n' % (wechat_list[0], wechat_list[1], self.ip, self.date, self.deviceid),'登录异常账号.txt')
-        if error == 'huatu':
-            file().write('%s %s %s %s 出现滑图 %s\n' % (wechat_list[0], wechat_list[1], self.ip, self.date, self.deviceid),'登录异常账号.txt')
+
     def add_friend(self, zh, mm, hy):
+        time.sleep(10)
+        self.driver.implicitly_wait(2)
+        while True:
+            if self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID']) != []:
+                break
+            if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID']) != []:
+                self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
+                if '微信密码' in self.cw.encode('utf-8'):
+                    self.driver.find_element_by_name('忽略').click()
+                if '表情' in self.cw.encode('utf-8'):
+                    self.driver.find_element_by_name('　取消　').click()
         self.driver.implicitly_wait(60)
         self.driver.find_element_by_id(self.element_json[u'微信页面加号']).click()
         self.driver.find_elements_by_id(self.element_json[u'加号列表'])[1].click()
         self.visualization('添加朋友')
         logging.info(self.deviceid + u'-添加朋友')
         self.driver.find_element_by_id(self.element_json[u'输入框ID']).click()
+        time.sleep(2)
         self.driver.find_element_by_id(self.element_json[u'输入框ID']).send_keys(hy)
-        time.sleep(3)
-        if self.driver.find_elements_by_id(self.element_json[u'点击添加按钮']) != []:
-            self.driver.find_element_by_id(self.element_json[u'点击添加按钮']).click()
         self.driver.implicitly_wait(2)
         while True:
+            if self.driver.find_elements_by_id(self.element_json[u'点击添加按钮']) != []:
+                time.sleep(3)
+                os.popen('adb -s %s shell input tap 600 300' % self.deviceid)
+                #self.driver.find_element_by_id(self.element_json[u'点击添加按钮']).click()
             if self.driver.find_elements_by_id(self.element_json[u'设置备注'])!=[]:
                 break
             if self.driver.find_elements_by_id(self.element_json[u'错误弹窗确定ID'])!=[]:
                 self.driver.find_element_by_id(self.element_json[u'错误弹窗确定ID']).click()
                 time.sleep(3)
                 self.driver.find_element_by_id(self.element_json[u'点击添加按钮']).click()
+            if self.driver.find_elements_by_name('该用户不存在')!=[]:
+                self.driver.find_element_by_id(self.element_json[u'输入框ID']).clear()
+                time.sleep(2)
+                self.driver.find_element_by_id(self.element_json[u'输入框ID']).send_keys(hy)
         while True:
             if self.driver.find_elements_by_id(self.element_json[u'添加通讯录']) != []:
                 self.driver.find_element_by_id(self.element_json[u'添加通讯录']).click()
@@ -358,22 +331,36 @@ class login_wechat():
         self.driver.find_element_by_id(self.element_json[u'消息内容框ID']).send_keys(zh)
         logging.info(self.deviceid + u'-正在发送信息:' + zh)
         self.visualization('正在发送信息:%s' % zh)
-        time.sleep(5)
-        self.driver.find_element_by_id(self.element_json[u'消息发送按钮ID']).click()
+        time.sleep(3)
+        while True:
+            if self.driver.find_element_by_id(self.element_json[u'消息发送按钮ID'])!=[]:
+                os.popen('adb -s %s shell input tap 1000 1839' % self.deviceid)
+            if self.driver.find_elements_by_id('com.tencent.mm:id/mq')!=[]:
+                break
         self.visualization('点击发送')
         logging.info(self.deviceid + u'-点击发送')
         time.sleep(2)
-        if self.gj_mode == '1.微霸改机'.decode("utf-8"):
-            file().writehy('%s_%s  %s  %s  %s  %s| %s' % (
-            self.wechat_list[0], self.wechat_list[1], datetime.datetime.now().strftime('%Y-%m-%d'), self.deviceid, self.
-                wxid, self.cloudCode, hy))
-        else:
-            file().writehy('%s  %s  %s %s' % (zh, mm, self.deviceid,hy))
+        file().write('%s_%s  %s  %s  %s  %s| %s\n' % (zh, mm, datetime.datetime.now().strftime('%Y-%m-%d'), self.deviceid, self.wxid, self.cloudCode, hy),'加好友成功列表.txt')
+        while True:
+            if self.w.save_wechat_data(zh, self.wxid,zh) == True:
+                time.sleep(15)
+                break
+
 
     def circle_of_friends(self):
+        time.sleep(10)
+        self.driver.implicitly_wait(2)
+        while True:
+            if self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID'])!=[]:
+                self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID'])[2].click()
+                break
+            if self.driver.find_elements_by_id(self.element_json[u'错误弹窗内容ID'])!=[]:
+                self.cw = self.driver.find_element_by_id(self.element_json[u'错误弹窗内容ID']).get_attribute(('text'))
+                if '微信密码' in self.cw.encode('utf-8'):
+                    self.driver.find_element_by_name('忽略').click()
+                if '表情' in self.cw.encode('utf-8'):
+                    self.driver.find_element_by_name('　取消　').click()
         self.driver.implicitly_wait(60)
-        self.driver.find_elements_by_id(self.element_json[u'微信四个主按钮ID'])[2].click()
-        self.visualization('点击发送')
         logging.info(self.deviceid + u'-点击发现')
         time.sleep(random.randint(1, 3))
         self.driver.find_elements_by_id(self.element_json[u'发现页面朋友圈ID'])[0].click()
@@ -381,7 +368,7 @@ class login_wechat():
         logging.info(self.deviceid + u'-点击朋友圈')
         time.sleep(5)
         if self.driver.find_elements_by_id(self.element_json[u'朋友圈相机ID'])!=[]:
-            TouchAction(self.driver).long_press(self.driver.find_element_by_id(self.element_json[u'朋友圈相机ID']), 3000).release().perform()
+            TouchAction(self.driver).long_press(self.driver.find_element_by_id(self.element_json[u'朋友圈相机ID']), 2000).release().perform()
             logging.info(self.deviceid + u'-长按相机')
             self.visualization('长按相机')
         self.driver.implicitly_wait(5)
@@ -398,13 +385,13 @@ class login_wechat():
         time.sleep(random.randint(1, 3))
         self.driver.find_element_by_id(self.element_json[u'微信四个主按钮ID']).click()
         time.sleep(random.randint(1, 3))
-        if self.gj_mode == '1.微霸改机'.decode("utf-8"):
-            file().write_pyq_succ('%s_%s  %s  %s  %s  %s|' % (
-            self.wechat_list[0], self.wechat_list[1], datetime.datetime.now().strftime('%Y-%m-%d'), self.deviceid, self.
-                wxid, self.cloudCode))
-        else:
-            file().write_pyq_succ('%s  %s  %s  %s' % (self.wechat_list[0], self.wechat_list[1], datetime.datetime.now().
-                                                      strftime('%Y-%m-%d'), self.deviceid))
+        file().write_pyq_succ('%s_%s  %s  %s  %s  %s|' % (
+        self.wechat_list[0], self.wechat_list[1], datetime.datetime.now().strftime('%Y-%m-%d'), self.deviceid, self.
+            wxid, self.cloudCode))
+        while True:
+            if self.w.save_wechat_data(self.wechat_list[0], self.wxid,self.wechat_list[0]) == True:
+                time.sleep(15)
+                break
 
     def input_message(self):
         time.sleep(random.randint(1, 2))
@@ -476,6 +463,7 @@ class login_wechat():
                             if self.driver.find_elements_by_name('iPad 微信已登录') != []:
                                 self.visualization('提62成功')
                                 logging.info(self.deviceid + u'-提62成功')
+                                print '%s----%s----%s----%s----%s\n' % (ph, mm, data_62, self.wxid, datetime.datetime.now().strftime('%Y-%m-%d'))
                                 file().write('%s----%s----%s----%s----%s\n' % (ph, mm, data_62, self.wxid, datetime.datetime.now().strftime('%Y-%m-%d')), '提62成功列表.txt')
                                 token().huojian_t62(self.deviceid, TokenYZ.pdtoken())
                                 return data_62
@@ -491,8 +479,12 @@ class login_wechat():
 
     def smjhy(self, ph=None, mm=None, device_token=None, hy=None):
         try:
-            self.wechat_list = self.sandbox_login(ph, mm)
-            self.error = self.mm_login(self.wechat_list[0], self.wechat_list[1])
+            if self.gj_mode == '1.微霸改机'.decode("utf-8"):
+                self.wechat_list = self.wb_login(ph, mm)
+                if self.login_mode == '1.wxid登陆'.decode("utf-8"):
+                    self.error = self.mm_login(self.wechat_list[0],self.wechat_list[1])
+                if self.login_mode == '2.云码登陆'.decode("utf-8"):
+                    self.error = self.zh_login(self.wechat_list)
             if self.error != None:
                 self.login_fail(self.error, self.wechat_list)
             else:
@@ -500,7 +492,6 @@ class login_wechat():
                 self.visualization('成功')
                 logging.info(self.deviceid + u'-成功')
         except:
-            traceback.print_exc()
             try:
                 self.driver.quit()
                 self.visualization('失败')
@@ -510,8 +501,12 @@ class login_wechat():
     #发朋友圈
     def fpyq(self, ph=None, mm=None, device_token=None):
         try:
-            self.wechat_list = self.sandbox_login(ph, mm)
-            self.error = self.mm_login(self.wechat_list[0], self.wechat_list[1])
+            if self.gj_mode == '1.微霸改机'.decode("utf-8"):
+                self.wechat_list = self.wb_login(ph, mm)
+                if self.login_mode == '1.wxid登陆'.decode("utf-8"):
+                    self.error = self.mm_login(self.wechat_list[0], self.wechat_list[1])
+                if self.login_mode == '2.云码登陆'.decode("utf-8"):
+                    self.error = self.zh_login(self.wechat_list)
             if self.error != None:
                 self.login_fail(self.error, self.wechat_list)
             else:
@@ -527,8 +522,15 @@ class login_wechat():
     #登录
     def wechat_signout(self, ph=None, mm=None, device_token=None):
         try:
-            self.wechat_list = self.sandbox_login(ph, mm)
-            self.error = self.mm_login(self.wechat_list[0], self.wechat_list[1])
+            if self.gj_mode == '1.微霸改机'.decode("utf-8"):
+                self.wechat_list = self.wb_login(ph, mm)
+                if self.login_mode == '1.wxid登陆'.decode("utf-8"):
+                    self.error = self.mm_login(self.wechat_list[0],self.wechat_list[1])
+                if self.login_mode == '2.云码登陆'.decode("utf-8"):
+                    self.error = self.zh_login(self.wechat_list)
+            if self.gj_mode == '2.神奇改机'.decode("utf-8"):
+                self.wechat_list = self.dd_switch(ph, mm, device_token)
+                self.error = self.zh_login(self.wechat_list)
             if self.error != None:
                 self.login_fail(self.error, self.wechat_list)
             else:

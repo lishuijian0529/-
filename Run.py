@@ -32,11 +32,11 @@ def run(xz,port,bport,deviceid,switch_ip,password,phmode,t,gj_mode,chvarUn,count
     if '7.删除微霸数据'.decode("utf-8") == xz:
         logging.info(u"-删除微霸数据模式")
         rm.delete()
-    if '8.注册模式(仅支持国外1080*1920)'.decode("utf-8") == xz:
-        logging.info(u"-国外注册模式")
-        rm.gw_zc_t62_1280()
-    if '9.导出数据'.decode("utf-8") == xz:
-        rm.pull_sandbox_data()
+    if '8.删除指定微霸数据'.decode("utf-8") == xz:
+        logging.info(u"-删除指定微霸数据模式")
+        rm.delete_wbdata()
+    if '9.微霸数据提取'.decode("utf-8") == xz:
+        rm.pull_weiba_data()
     if '10.云码数据恢复到文本'.decode("utf-8") == xz:
         logging.info(u"-开始恢复云码")
         rm.cloudCode_Recover()
@@ -92,7 +92,7 @@ def qd():
     device_list = select_device()
     win = tk.Tk()
     win.iconbitmap('1.ico')
-    win.title("火箭注册v0.8.6")  # 在这里修改窗口的标题
+    win.title("火箭注册v3.7.0.7")  # 在这里修改窗口的标题
     ttk.Label(win, text='已连接设备:%s' %device_list, anchor='c').grid(row=1)
     ttk.Label(win, text='', anchor='c').grid(row=2)
     ttk.Label(win, text='本程序仅供技术交流、请勿用于商业或非法用途', anchor='c').grid(row=3)
@@ -112,7 +112,7 @@ def qd():
     ip_mode = ttk.Combobox(win, width=27, textvariable=tk.StringVar(), state='readonly')
     ip_mode['values'] = ('1.飞行模式', '2.VPN', '3.不换IP', '4.私人VPN', '5.私人VPN2')
     run_mode = ttk.Combobox(win, width=27, textvariable=tk.StringVar(), state='readonly')
-    run_mode['values'] = ('1.注册模式', '2.注册发朋友圈', '3.登录发朋友圈', '4.登录提62(仅支持国内)','5.加好友', '6.注册模式(仅支持国外720*1280)', '7.删除微霸数据', '8.注册模式(仅支持国外1080*1920)','9.微霸数据提取','10.云码数据恢复到文本','11.注册发圈提62','12.登陆扫一扫')
+    run_mode['values'] = ('1.注册模式', '2.注册发朋友圈', '3.登录发朋友圈', '4.登录提62(仅支持国内)','5.加好友', '6.注册模式(仅支持国外720*1280)', '7.删除微霸数据', '8.删除指定微霸数据','9.微霸数据提取','10.云码数据恢复到文本','11.注册发圈提62','12.登陆扫一扫')
     run_mode.grid(row=10)
     run_mode.current(0)
     login_mode=ttk.Combobox(win, width=27, textvariable=tk.StringVar(), state='readonly')
@@ -132,7 +132,7 @@ def qd():
         t.insert(0, '10')
     t.grid(column=0, row=17)
     gj_mode = ttk.Combobox(win, width=27, textvariable=tk.StringVar(), state='readonly')
-    gj_mode['values'] = ['测试']
+    gj_mode['values'] = ['1.微霸改机','2.神奇改机','测试']
     gj_mode.grid(row=14)
     gj_mode.current(0)
     cooperator = ttk.Combobox(win, width=27, textvariable=tk.StringVar(), state='readonly')

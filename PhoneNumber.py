@@ -109,7 +109,6 @@ class PhoneNumber():
                 header = {'Authorization': 'Bearer ' + token}
                 json1 = {'cardId': cardid, "message": text}
                 res = requests.post(url='http://api.91huojian.com/card', json=json1, headers=header,timeout=100).text
-                print res
                 time.sleep(3)
                 if json.loads(res)['code'] == '0':
                     return True
@@ -355,35 +354,53 @@ class PhoneNumber():
                     time.sleep(2)
                     logging.debug(self.deviceid + u'-未获取到验证码,稍后两秒再试')
 
-        # 国内私人3获取手机
-
+        # 国内私人3  Sky的
         def grsr3_get_ph(self):
             ph = requests.get(
-                'http://tf.codesfrom.com:18000/yhapi.ashx?Action=getPhone&token=%s&i_id=%s&d_id=&p_operator=&p_qcellcore=&mobile=' % (
+                'http://39.108.139.162:18005/yhapi.ashx?Action=getPhone&token=%s&i_id=%s&d_id=&p_operator=&p_qcellcore=&mobile=' % (
                 self.uid, self.pid)).text
+            print ph
+
             logging.info(self.deviceid + u'-获取手机号码:' + re.findall('\|([0-9]{11})\|10690700367', ph)[0])
             return re.findall('\|([0-9]{11})\|10690700367', ph)[0], re.findall('OK\|(.*?)\|', ph)[0]
-        #  #国外私人3发短
+
+        # 国内私人3发短 Sky的
         def grsr3_send(self, p_id, dx):
             res = requests.get(
-                'http://tf.codesfrom.com:18000/yhapi.ashx?Action=putPhoneMessage&token=%s&p_id=%s&receiver=10690700367&message=%s' % (
+                'http://39.108.139.162:18005/yhapi.ashx?Action=putPhoneMessage&token=%s&p_id=%s&receiver=10690700367&message=%s' % (
                 self.uid, p_id, dx)).text
             if 'OK' in res:
                 return 'succ'
         # 国外私人3拉黑
         def grsr3_lh(self, p_id):
             res = requests.get(
-                'http://tf.codesfrom.com:18000/yhapi.ashx?Action=phoneRelease&token=%s&p_id=%s' % (
+                'http://39.108.139.162:18005/yhapi.ashx?Action=phoneRelease&token=%s&p_id=%s' % (
                 self.uid, p_id)).text
             if 'OK' in res:
                 logging.info(self.deviceid + u'-释放成功')
 
         def grsr4_get_ph(self):
-            ph = requests.get(
-                'http://www.xiguawto.com:18000/yhapi.ashx?Action=getPhone&token=%s&i_id=%s&d_id=&p_operator=&p_qcellcore=&mobile=' % (
-                    self.uid, self.pid)).text
-            logging.info(self.deviceid + u'-获取手机号码:' + re.findall('\|([0-9]{11})\|10690700367', ph)[0])
-            return re.findall('\|([0-9]{11})\|10690700367', ph)[0], re.findall('OK\|(.*?)\|', ph)[0]
+            while True:
+                try:
+                    res = requests.get(
+                        'http://www.xiguawto.com:18000/yhapi.ashx?Action=getPhone&token=%s&i_id=%s&d_id=&p_operator=&p_qcellcore=&mobile=' % (
+                            self.uid, self.pid)).text
+                    phonenumber = re.findall('\|([0-9]{11})\|10690700367', res)[0]
+                    token = re.findall('OK\|(.*?)\|', res)[0]
+                    data = open('手机号码过滤.txt'.decode('utf-8'), 'r').readlines()
+                    list = []
+                    for i in data:
+                        if i.strip('\n') in phonenumber:
+                            list.append(i.strip('\n'))
+                    if list == []:
+                        logging.info(u'%s-获取到手机号码:%s' % (self.deviceid, phonenumber))
+                        return phonenumber, token
+                    else:
+                        logging.info(u'%s-%s被过滤' % (self.deviceid, phonenumber))
+                except:
+                    logging.info(u'%s-未获取到手机号码'%self.deviceid)
+                    time.sleep(5)
+
 
         def grsr4_send(self, p_id, dx):
             res = requests.get(
@@ -442,11 +459,8 @@ class PhoneNumber():
                 logging.info('%s-%s' % (self.deviceid, res))
 
 if __name__ == '__main__':
-    a = PhoneNumber('100756-qsq','6821699', '1296', '945f3978', u'11.菜鸟国外', '213')
-    c=TokenYZ.pdtoken()
-    b=a.hj_get(c)
-    d=a.send_text(c,b[1],'zc12')
-    print b
-    print d
+    a = PhoneNumber('295F9DEC06D34060AE766AF8E169D95C','123456', '1000', '945f3978', u'11.菜鸟国外', '213')
+    #b=a.hj_get(TokenYZ.pdtoken())
+    print a.grsr3_get_ph()
 
 

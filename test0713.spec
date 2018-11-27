@@ -3,8 +3,8 @@
 block_cipher = None
 
 
-a = Analysis(['Run.py'],
-             pathex=['D:\\appium-6.7.3'],
+a = Analysis(['test0713.py'],
+             pathex=['D:\\appium-6.7.2'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -21,7 +21,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='Run',
+          name='test0713',
           debug=False,
           strip=False,
           upx=True,

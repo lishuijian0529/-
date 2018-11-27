@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['upload.py'],
-             pathex=['D:\\saas_6.7.3'],
+             pathex=['D:\\appium-6.7.2'],
              binaries=[],
              datas=[],
              hiddenimports=[],

@@ -4,7 +4,7 @@ import random
 import time
 import sys
 import logging
-
+import logger
 class file():
         @staticmethod
         def readIpFile():                       #∂¡»°IP
@@ -68,10 +68,8 @@ class file():
         @staticmethod
         def sh():
                 try:
-                        with open("≈Û”—»¶ƒ⁄»›.txt", 'r') as f:
-                                data = f.readlines()
-                                return data[random.randint(0, len(data))].decode("gb2312").strip('\n')
-
+                        f = open(r"≈Û”—»¶ƒ⁄»›.txt", 'r')
+                        return f.readlines()[random.randint(0, 368)].decode("gb2312")
                 except Exception, e:
                         print e.message
 
@@ -124,8 +122,8 @@ class file():
         @staticmethod
         def readtoken():
                 try:
-                        with open("tcl85.ini", 'r') as f:
-                                return f.read().splitlines()
+                        f = open(r"tcl85.ini", 'r')
+                        return f.read().splitlines()
                 except Exception, e:
                         print e.message
 

@@ -12,7 +12,8 @@ def xrtoken():
     user = file().readuser()
     try:
         tk = token().get(user[17].strip('\n'), user[20].strip('\n'))
-        file().writetoken(tk[0] + b[1])
+        print tk
+        file().writetoken(tk[0] + b[2] + b[4])
         return tk[1]
     except:
         logging.info(u'账号脚本可允许数量超过限制')
@@ -30,15 +31,15 @@ def gettoken():
     获取原始token
             """
     token = file().readtoken()
-    return token[0][:-1]
+    return token[0][:-2]
 
 def pdsb():
     """
        判断设备
                """
     b = re.findall(': (.*)', os.popen('ipconfig /all').read().splitlines()[3])[0]
-    token1 = b[1]
-    token2 = file().readtoken()[0][-1:]
+    token1 = b[2]+b[4]
+    token2 = file().readtoken()[0][-2:]
     if token1 == token2:
         return '1'
     else:

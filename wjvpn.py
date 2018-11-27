@@ -22,17 +22,16 @@ class wj():
             driver.find_element_by_id('org.wuji:id/exit_vpn').click()  # 切换VPN
             time.sleep(int(t))
             try:
-                ip = re.findall('[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}',
-                                driver.find_element_by_id('org.wuji:id/ips').get_attribute(("text")))[0]
-                logging.info(self.deviceid + u"-VPN已成功连接")
-                logging.info(self.deviceid + u"-IP:%s" % ip)
+                ip=re.findall('[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}',driver.find_element_by_id('org.wuji:id/ips').get_attribute(("text")))[0]
+                logging.info(self.deviceid+u"-VPN已成功连接")
+                logging.info(self.deviceid + u"-IP:%s"%ip)
                 if m == '1':
-                    if ip_fiter(self.deviceid, ip, filtering_mode) == True:
+                    if ip_fiter(self.deviceid,ip,filtering_mode) == True:
                         return ip
                     else:
                         pass
                 if m == '2':
-                    if ip_fiter(self.deviceid, ip, filtering_mode) == True:
+                    if ip_fiter(self.deviceid,ip,filtering_mode) == True:
                         return ip
                     else:
                         pass

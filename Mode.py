@@ -9,8 +9,6 @@ from PhoneNumber import PhoneNumber
 from LoginWechat import login_wechat
 from Newenvironment import newenvironment
 from FlightMode import flightmode
-import TokenYZ
-from Token import token
 import random
 import string
 from OpenPhone import Open
@@ -18,7 +16,6 @@ import os
 from weiba_api import WB
 import json
 from Server_VPS import vps
-import datetime
 import traceback
 class mode():
     # 账号注册
@@ -44,6 +41,7 @@ class mode():
         self.filtering_mode = filtering_mode
 
     def connectbot(self):
+            logging.info(self.deviceid + u'-手机暂时无网络,重新检测')
             os.system('adb -s ' + self.deviceid + ' shell am force-stop org.connectbot')
             driver = Open().Phone('org.connectbot', '.HostListActivity', self.deviceid, self.port)
             driver.implicitly_wait(180)
@@ -62,15 +60,11 @@ class mode():
             time.sleep(3)
 
     def proxy(self):
-        try:
-            os.popen('adb -s %s shell kill -9 %s' % (self.deviceid,os.popen('adb -s %s shell "ps|grep org.proxydroid"'%self.deviceid).read().split()[1]))
-        except:
-            pass
         os.system('adb -s ' + self.deviceid + ' shell am force-stop org.proxydroid')
         self.driver = Open().Phone('org.proxydroid', '.ProxyDroid', self.deviceid, self.port)
         self.driver.implicitly_wait(180)
-        self.driver.find_element_by_id('android:id/switch_widget').click()
-        time.sleep(10)
+        self.driver.find_element_by_id('android:id/switchWidget').click()
+        time.sleep(2)
         logging.info(self.deviceid+u'-Proxy成功连接')
 
     def pd_ip(self, m):
@@ -107,9 +101,7 @@ class mode():
                 logging.info(self.deviceid + u'-养号列表不存在该设备号数据')
                 time.sleep(12)
 
-    def run_mode(self):
-        ye = str(token().get_balance(TokenYZ.gettoken()))
-        return 'tm'+ye[-1]
+
 
     def get_wechatdata(self,culture_list):
         ph = re.findall('([0-9]{1,100})_', culture_list)[0]
@@ -121,9 +113,7 @@ class mode():
             logging.info(self.deviceid + u'-获取到多多云码:' + self.device_token)
         except:self.device_token = 'test'
         try:
-            for i in culture_list.split():
-                if 'ID' in i:
-                    self.hy = i[3:]
+            self.hy = re.findall('ID:(.*)',culture_list)[0]
             logging.info(self.deviceid + u'-获取到好友ID:' + self.hy)
         except:self.hy = 'test'
         try:
@@ -133,12 +123,10 @@ class mode():
             logging.info(self.deviceid + u'-未获取到WXID')
             self.wxid = 'test'
         try:
-            for i in culture_list.split():
-                if 'zip' in i:
-                    self.cloudCode = i[:-1]
-            logging.info(self.deviceid + u'-获取环境包:%s'%self.cloudCode)
+            self.cloudCode = 'wbp:'+re.findall('wbp:(.*?)\|', culture_list)[0]
+            logging.info(self.deviceid + u'-获取到云码:' + self.cloudCode)
         except:
-            logging.info(self.deviceid + u'-未获取环境包')
+            logging.info(self.deviceid + u'-未获取到云码')
             self.cloudCode = 'test'
         try:
             self.ip = re.findall('  ([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})  ', culture_list)[0]
@@ -154,19 +142,10 @@ class mode():
             self.date = 'test'
         return ph,mm,self.device_token,self.hy,self.wxid,self.cloudCode,self.ip,self.date
 
-    def Judgment_Devices(self):
-        while True:
-            if os.system('adb -s %s shell cd /sdcard' % self.deviceid) != 0:
-                logging.info(u'%s未检测到手机连接'%self.deviceid)
-                time.sleep(5)
-            else:
-                break
-                #raise Exception, "%s-未连接到手机" % self.deviceid
-
     def random_password_Verification(self):
         if self.wxmm == '请输入注册密码'.decode("utf-8"):
             while True:
-                keylist = ''.join([random.choice(string.digits + string.ascii_lowercase) for i in range(6)])+str(random.randint(0, 9))+'a'
+                keylist = ''.join([random.choice(string.digits + string.ascii_lowercase) for i in range(8)])
                 if 'l' not in keylist:
                     if '9' in keylist:
                         break
@@ -195,7 +174,7 @@ class mode():
                     try:
                         for self.wechat_Data in new_data_list:
                             if re.findall('(.*)\|', support)[0] in self.wechat_Data:
-                                num.append('%s ID:%s' % (self.wechat_Data.strip('\n'), re.findall('\|(.*)', support)[0]))
+                                num.append('%s|ID:%s' % (self.wechat_Data.strip('\n'), re.findall('\|(.*)', support)[0]))
                     except:
                         logging.info(self.deviceid+u'-正则没有匹配到该条数据:'+self.wechat_Data)
         if num.__len__() <> 0:
@@ -228,25 +207,23 @@ class mode():
             self.tm = json.loads(f.read())['runmode']
         while True:
             try:
-                self.Judgment_Devices()
+                #phonenumber = '13061759881','123'
                 phonenumber = self.phmode.all_getph()
                 self.ip = self.pd_ip('1')
                 if self.country == '2.国外'.decode("utf-8"):
                     self.wxmc = file().readwxmc().decode("gb2312").strip('\n')
                 if self.country == '1.国内'.decode("utf-8"):
-                    self.wxmc = file().readwxmc().strip('\n')
-                    #self.wxmc = file().readwxmc().decode("gb2312").strip('\n')
+                    self.wxmc = file().readwxmc().decode("gb2312").strip('\n')
                 self.sjmm = self.random_password_Verification()
                 if mode == 'zc':
-                    newenvironment(self.user[3], self.user[6], self.user[9], self.deviceid, self.port, self.user[17],self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,switchingmode=self.switchingmode,filtering_mode=self.filtering_mode,t=self.t,ip=self.ip).new_zh()
+                    newenvironment(self.user[3], self.user[6], self.user[9], self.deviceid, self.port, self.user[17],self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,ip=self.ip).new_zh()
                 if mode == 'zcfpyq':
                     newenvironment(self.user[3], self.user[6], self.user[9], self.deviceid, self.port, self.user[17],
-                                   self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,switchingmode=self.switchingmode,filtering_mode=self.filtering_mode,t=self.t,ip=self.ip).new_zhpyq()
+                                   self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,ip=self.ip).new_zhpyq()
                 if mode == 'zc_pyq_t62':
-                    newenvironment(self.user[3], self.user[6], self.user[9], self.deviceid, self.port, self.user[17],self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,switchingmode=self.switchingmode,filtering_mode=self.filtering_mode,t=self.t,ip=self.ip).zc_pyq_t62()
-                if mode == 'gw_zc_t62_1280':
-                    newenvironment(uid=self.user[3], password=self.user[6], pid=self.user[9], deviceid=self.deviceid,port=self.port, o_username=self.user[17], o_password=self.user[20], wxmm=self.sjmm,phmode=self.f, wxmc=self.wxmc, phonenumber=phonenumber, gj_mode=self.gj_mode,tm=self.tm, cooperator=self.cooperator, country=self.country, gj=self.gj, qh=self.qh,switchingmode=self.switchingmode,filtering_mode=self.filtering_mode,t=self.t,ip=self.ip).gw_zc_t62_1280()
+                    newenvironment(self.user[3], self.user[6], self.user[9], self.deviceid, self.port, self.user[17],self.user[20], self.sjmm, self.f, self.wxmc.strip('\n'), phonenumber, self.gj_mode,self.tm, self.cooperator, country=self.country, gj=self.gj, qh=self.qh,ip=self.ip).zc_pyq_t62()
             except:
+                traceback.print_exc()
                 logging.info(self.deviceid + u'-发现异常,重新注册')
                 time.sleep(5)
 
@@ -270,6 +247,7 @@ class mode():
         try:
             self.breeding_Mode('login')
         except:
+            traceback.print_exc()
             logging.info(self.deviceid + u'-登录异常')
 
     def addfriends(self):
@@ -287,14 +265,20 @@ class mode():
             logging.info(self.deviceid+u'-发现异常,重新切换队列')
 
     def delete(self):
-        os.system('adb -s %s shell rm -rf/sdcard/Download/weiba/wx' % (self.deviceid))
+        os.popen('adb -s %s shell rm -rf /sdcard/Download/weiba/wx' % (self.deviceid))
         logging.info(self.deviceid + u'-已删除')
 
-    def gw_zc_t62_1280(self):
-        self.Registration_Mode('gw_zc_t62_1280')
+    def delete_wbdata(self):
+        with open('微霸环境包删除设置.txt'.decode('utf-8'), 'r') as f:
+            wx_data = f.readlines()
+        for i in wx_data:
+            try:
+                os.popen('adb -s %s shell rm -rf /sdcard/Download/weiba/wx/%s.wbwx' % (self.deviceid,i.strip('\n')))
+            except:pass
+        logging.info('%s-设备数据删除完毕'%self.deviceid)
 
-    def pull_sandbox_data(self):
-       os.popen('adb -s %s pull sdcard/boxbackup/ package/%s/%s/' % (self.deviceid, self.deviceid,datetime.datetime.now().strftime('%Y%m%d')))
+    def pull_weiba_data(self):
+       os.popen('adb -s %s pull /sdcard/Download/weiba/wx weiba_data/%s/' % (self.deviceid, self.deviceid))
 
     def cloudCode_Recover(self):
             try:

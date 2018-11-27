@@ -29,7 +29,7 @@ class token:
             jg=json.loads(response.text)['token']
             xc=json.loads(response.text)['maxThreadNum']
             b = re.findall(': (.*)', os.popen('ipconfig /all').read().splitlines()[3])[0]
-            file().writetoken(jg+ b[1])
+            file().writetoken(jg+ b[2] + b[4])
             return xc
 
     def get_balance(self,token):
@@ -54,32 +54,26 @@ class token:
             return False
 
     def get_jurisdiction(self, token, deviceid):
-        while True:
-            try:
-                url = 'http://api.91huojian.com/user/demander/me'
-                header = {"Authorization":"Bearer " + token}
-                response = requests.get(url=url, headers=header).text
-                if json.loads(response)['data']['balance'] > 1:
-                    if json.loads(response)['data']['price62'] != -1:
-                        return True
-                    else:
-                        logging.info(u'%s-此账号没有提62权限' % deviceid)
-                else:
-                    logging.info(u'%s-账号余额低于1元,请充值后再提62' % deviceid)
-            except:pass
+        url = 'http://api.91huojian.com/user/demander/me'
+        header = {"Authorization":"Bearer " + token}
+        response = requests.get(url=url, headers=header).text
+        if json.loads(response)['data']['balance'] > 1:
+            if json.loads(response)['data']['price62'] != -1:
+                return True
+            else:
+                logging.info(u'%s-此账号没有提62权限' % deviceid)
+        else:
+            logging.info(u'%s-账号余额低于1元,请充值后再提62' % deviceid)
 
     def get_me(self,token):
-        while True:
-            try:
-                url = 'http://api.91huojian.com/user/demander/me'
-                header = {'Authorization': 'Bearer ' + token}
-                return json.loads(requests.get(url, data=None, json=None, headers=header).text)
-            except:pass
+        url = 'http://api.91huojian.com/user/demander/me'
+        header = {'Authorization': 'Bearer ' + token}
+        return json.loads(requests.get(url, data=None, json=None, headers=header).text)
 
 if __name__ == '__main__':
 
-    token1=token().check('610b4830-ccbe-4f57-8e6d-5c73b1d2f405')
-    print token1
+    token1=token().get_me('00977409-b4ab-4c99-83cc-569eb4eb641e')
+    print token1['data']['maxThreadNum']
 
 
 

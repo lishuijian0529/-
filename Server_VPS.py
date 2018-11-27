@@ -13,8 +13,14 @@ class vps():
         self.vps_data = file.read_all('VPS.json')
         for dev in json.loads(self.vps_data):
             if self.deviceid == dev['deviceid']:
-                self.vps = dev
+                self.vps= dev
                 break
+        #try:
+        #    print self.vps
+        #except:
+        #    while True:
+        #        logging.info(self.deviceid + u'-VPS.json文件中未配置%s设备的数据,请配置好所有连接上的设备数据再运行'%self.deviceid)
+        #        time.sleep(10)
 
     def login(self):
         ssh = paramiko.SSHClient()
@@ -26,7 +32,7 @@ class vps():
     def switch(self):
         ssh=self.login()
         logging.info(self.deviceid+u'-断开连接')
-        ssh.exec_command('%s' % self.vps['disconnect_command'])
+        ssh.exec_command('%s' % self.vps['disconnect_command'] )
         time.sleep(2)
         logging.info(self.deviceid + u'-开始拨号')
         ssh.exec_command('%s' % self.vps['connection_command'])
@@ -51,5 +57,6 @@ class vps():
                         file().writeIpFile(ip[0])
                         return ip[0]
             except:
-                time.sleep(5)
                 logging.info(self.deviceid + u'-服务器暂时无法联网,尝试重新拨号')
+
+

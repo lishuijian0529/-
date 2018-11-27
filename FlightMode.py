@@ -5,6 +5,7 @@ import logger
 import logging
 import os
 from IP_Filtering import ip_fiter
+from weiba_api import WB
 class flightmode():
     def __init__(self, deviceid, port):
         self.deviceid = deviceid
@@ -15,13 +16,14 @@ class flightmode():
         os.system('adb -s '+ self.deviceid +' shell am force-stop com.tencent.mm')
         while True:
             try:
-                os.popen('adb -s '+ self.deviceid +' shell settings put global airplane_mode_on 1')
-                os.popen('adb -s '+ self.deviceid +' shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true')
-                logging.info(self.deviceid+u'-开启飞行模式')
-                time.sleep(5)
-                os.popen('adb -s '+ self.deviceid +' shell settings put global airplane_mode_on 0')
-                os.popen('adb -s '+ self.deviceid +' shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false')
-                logging.info(self.deviceid + u'-关闭飞行模式')
+                WB(self.deviceid).airplaneModeTigger()
+                # os.popen('adb -s '+ self.deviceid +' shell settings put global airplane_mode_on 1')
+                # os.popen('adb -s '+ self.deviceid +' shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true')
+                # logging.info(self.deviceid+u'-开启飞行模式')
+                # time.sleep(5)
+                # os.popen('adb -s '+ self.deviceid +' shell settings put global airplane_mode_on 0')
+                # os.popen('adb -s '+ self.deviceid +' shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false')
+                # logging.info(self.deviceid + u'-关闭飞行模式')
                 time.sleep(int(t))
             except:pass
             try:

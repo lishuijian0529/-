@@ -5,6 +5,9 @@ import logging
 import logger
 import time
 import json
+import os
+import base64
+import requests
 class WB():
     def __init__(self,device):
         self.device = device
@@ -153,8 +156,30 @@ class WB():
         except:
             logging.info(self.device + u'-检测微霸未开启,程序自动开启微霸')
 
-    def edit(self):
-        res = os.popen('adb -s '+self.device+' shell curl -g "http://127.0.0.1:8888/cmd?group=AppTool\&action=setDeviceHook\&params=[%22phone.WifiMAC%22,%22bbb%22]"').read()
-        print res
+    def scancode(self):
+        status = os.popen(
+            'adb -s ' + self.device + ' shell curl -g "http://127.0.0.1:8888/cmd?group=AppTool\&action=wxStartScan\&params=[%22\/sdcard\/myData\/scan.png%22]"').read()
+        print status
+
+    def airplaneModeTigger(self):
+        while True:
+            if self.freshAuth()==True:
+                try:
+                    if self.test()== True:
+                        logging.info(u'%s-正在切换飞行'%self.device)
+                        os.popen('adb -s %s shell curl "http://127.0.0.1:8888/cmd?group=AppTool\&action=airplaneModeTigger"'%self.device)
+                        logging.info(u'%s-切换飞行成功'%self.device)
+                        break
+                    else:
+                        logging.info(self.device+u'-后台微霸未启动')
+                except:
+                    logging.info(self.device+u'-环境切换失败')
+            else:
+                logging.info(self.device + u'-微霸授权刷新失败,重新刷新授权')
+
+
+
 if __name__ == '__main__':
-    print WB('db9c0d81').edit()
+
+    a = WB('db9c0d81').airplaneModeTigger()
+

@@ -4,7 +4,9 @@
 	"port":20172,
 	"username":"root",
 	"password":"kk123",
-	"deviceid":"fcd7f6ad"
+	"deviceid":"fcd7f6ad",
+	"connection_command":"",
+	"disconnect_command":""
 },
 {
 	"hostname":"222.190.133.116",

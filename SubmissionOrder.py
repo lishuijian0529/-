@@ -42,6 +42,6 @@ class submissionorder():
 
 
 if __name__ == '__main__':
-    print submissionorder().submission('https://weixin110.qq.com/s/346339a0f6a',ph="13033333333",token='6fd9167d-691d-4fed-989f-6cb03476b00d',expire=300)
+    print submissionorder().submission('https://weixin110.qq.com/s/346339a0f6a',ph="13033333333",token='0afb1cfc-da8b-4916-a7e1-9bb0a0048d22',expire=0)
 
 
