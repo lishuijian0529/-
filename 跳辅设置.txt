@@ -1,4 +1,0 @@
-{
-	"runmode":"6",
-	"transmission_mode":"adb"
-}
